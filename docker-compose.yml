@@ -7,7 +7,6 @@ x-rust-base: &rust-base
   - ./Cargo.lock:/app/Cargo.lock
   - ./app:/app/app
   - ./lib:/app/lib
-  - ./.env:/app/.env
   - target:/app/target
   - cargo-cache:/usr/local/cargo/registry
  networks:
@@ -29,6 +28,15 @@ services:
   #  - colllus
   networks:
    - untroche
+
+ watcher:
+  build:
+   context: .
+   dockerfile: watcher/Dockerfile.dev
+  volumes:
+   - ./app:/app/app
+   - ./watcher/tsconfig.json:/app/tsconfig.json:ro
+   - ./watcher/compile.sh:/app/compile.sh:ro
 
  portal:
   <<: *rust-base
