@@ -9,3 +9,4 @@ memo/
 *-min/
 script/
 *.db*
+db.exe
