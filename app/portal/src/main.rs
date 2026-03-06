@@ -7,6 +7,8 @@ use actix_session::{SessionMiddleware, config::PersistentSession, storage};
 use actix_web::{App, HttpResponse, HttpServer, cookie, middleware, web};
 use common::AdminGuardMiddleware;
 
+const APP_PATH: &str = "app/portal";
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 	// 環境変数読み込み

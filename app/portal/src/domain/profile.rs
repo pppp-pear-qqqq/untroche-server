@@ -4,7 +4,7 @@ use serde::Deserialize;
 use sqlx::SqlitePool;
 use validation::Validation;
 
-use crate::types::{Id, MessageResult, PageResult, State, StateHandle};
+use crate::types::{MessageResult, Name, PageResult, State, StateHandle};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(index).patch(patch).delete(delete));
@@ -12,7 +12,7 @@ pub fn cfg(cfg: &mut web::ServiceConfig) {
 
 // 編集・設定画面
 async fn index() -> PageResult<impl Responder> {
-	Ok("")
+	Ok("") // TODO
 }
 
 // 更新処理
@@ -31,7 +31,7 @@ struct Password {
 	#[validation(name = "パスワード", min = 8)]
 	new: String,
 }
-async fn patch(info: web::Json<Patch>, id: Id, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn patch(info: web::Json<Patch>, name: Name, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	if *state != State::Active {
 		return Err(ErrorForbidden("当サイトはクローズしています").into());
 	}
@@ -42,7 +42,7 @@ async fn patch(info: web::Json<Patch>, id: Id, state: StateHandle, pool: web::Da
 	let pool = pool.as_ref();
 	// パスワード
 	if let Some(password) = &info.password {
-		let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", *id).fetch_one(pool).await?;
+		let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", *name).fetch_one(pool).await?;
 		if !crate::utils::password::verify(&password.now, &hashed).map_err(|err| ErrorInternalServerError(err))? {
 			return Err(ErrorForbidden("パスワードが異なります").into());
 		}
@@ -71,7 +71,7 @@ async fn patch(info: web::Json<Patch>, id: Id, state: StateHandle, pool: web::Da
 			sep.push("webhook=NULL");
 		}
 	}
-	builder.push(" WHERE id=").push_bind(&*id);
+	builder.push(" WHERE name=").push_bind(&*name);
 	builder.build().execute(pool).await?;
 	Ok(HttpResponse::NoContent().finish())
 }
@@ -81,12 +81,12 @@ async fn patch(info: web::Json<Patch>, id: Id, state: StateHandle, pool: web::Da
 struct Delete {
 	password: String,
 }
-async fn delete(info: web::Form<Delete>, id: Id, _: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn delete(info: web::Form<Delete>, name: Name, _: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	let pool = pool.as_ref();
-	let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", *id).fetch_one(pool).await?;
+	let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", *name).fetch_one(pool).await?;
 	if !crate::utils::password::verify(&info.password, &hashed).map_err(|err| ErrorInternalServerError(err))? {
 		return Err(ErrorForbidden("パスワードが異なります").into());
 	}
-	sqlx::query!("DELETE FROM user WHERE name=?", *id).execute(pool).await?;
+	sqlx::query!("DELETE FROM user WHERE name=?", *name).execute(pool).await?;
 	Ok(HttpResponse::NoContent().finish())
 }

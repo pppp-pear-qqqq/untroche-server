@@ -16,3 +16,13 @@ pub mod password {
 		}
 	}
 }
+
+pub mod path {
+	pub fn resource(path: &str) -> String {
+		if cfg!(debug_assertions) {
+			format!("{}/resource/{path}", crate::APP_PATH)
+		} else {
+			format!("{}/{path}", crate::APP_PATH)
+		}
+	}
+}

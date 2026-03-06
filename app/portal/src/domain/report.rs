@@ -8,10 +8,10 @@ pub fn cfg(cfg: &mut web::ServiceConfig) {
 
 // 画面表示
 async fn index() -> PageResult<impl Responder> {
-	Ok("")
+	Ok("") // TODO
 }
 
 // 投稿
 async fn post() -> MessageResult<impl Responder> {
-	Ok("")
+	Ok("") // TODO
 }

@@ -5,27 +5,30 @@ use rand::{TryRngCore as _, rngs::OsRng};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::types::{Id, MessageResult, State, StateHandle};
+use crate::{
+	types::{MessageResult, Name, State, StateHandle},
+	utils::path,
+};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(issue).post(cert));
 }
 
-async fn issue(id: Option<Id>, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn issue(name: Option<Name>, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	// 認証コード有効期限(秒)
 	const EXPIRY: i64 = 120;
 
 	if *state != State::Active {
 		return Err(ErrorForbidden("当サイトはクローズしています").into());
 	}
-	let code = if let Some(id) = id {
+	let code = if let Some(name) = name {
 		// コード生成
 		let code = loop {
 			let mut dst = [0xffu8; 20];
 			OsRng.try_fill_bytes(&mut dst)?;
 			let code = BASE64_URL_SAFE_NO_PAD.encode(dst);
 			let timestamp = Local::now().timestamp() + EXPIRY;
-			match sqlx::query!("INSERT INTO auth(code,timestamp,user) VALUES(?,?,?)", code, timestamp, *id).execute(pool.as_ref()).await {
+			match sqlx::query!("INSERT INTO auth(code,timestamp,user) VALUES(?,?,?)", code, timestamp, *name).execute(pool.as_ref()).await {
 				Ok(_) => break code,
 				// 万が一コードが重複したらもう一回やる
 				Err(sqlx::Error::Database(err)) if err.is_unique_violation() => continue,
@@ -37,7 +40,7 @@ async fn issue(id: Option<Id>, state: StateHandle, pool: web::Data<SqlitePool>) 
 		None
 	};
 	// コードを埋め込んだhtmlを返す
-	let html = liquid::ParserBuilder::with_stdlib().build()?.parse_file("app/portal/resource/auth.html")?.render(&liquid::object!({
+	let html = liquid::ParserBuilder::with_stdlib().build()?.parse_file(path::resource("auth.html"))?.render(&liquid::object!({
 		"code": code.as_ref(),
 	}))?;
 	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))

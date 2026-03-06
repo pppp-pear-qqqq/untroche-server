@@ -13,12 +13,12 @@ pub fn cfg(cfg: &mut web::ServiceConfig) {
 struct Search {
 	#[serde(flatten)]
 	page: PageParams,
-	id: Option<String>,
+	name: Option<String>,
 }
 
 // ユーザ一覧
 async fn list(_info: web::Query<Search>) -> PageResult<impl Responder> {
-	Ok("")
+	Ok("") // TODO
 }
 
 // 検索API
@@ -28,17 +28,21 @@ async fn search(info: web::Json<Search>, pool: web::Data<SqlitePool>) -> Message
 		id: String,
 		profile: String,
 	}
-	info.page.offset();
 	let mut builder = sqlx::QueryBuilder::new("SELECT * FROM user");
-	if let Some(id) = &info.id {
-		builder.push(" WHERE id=?").push_bind(id);
+	if let Some(name) = &info.name {
+		let search = format!("%{name}%");
+		builder.push(" WHERE name LIKE ?").push_bind(search);
 	}
-	builder.push(" ORDER BY id ASC LIMIT ").push_bind(info.page.offset() as i64).push(",").push_bind(info.page.limit as i64);
+	builder
+		.push(" ORDER BY name ASC LIMIT ")
+		.push_bind(info.page.offset() as i64)
+		.push(",")
+		.push_bind(info.page.limit() as i64);
 	let result: Vec<Record> = builder.build_query_as().fetch_all(pool.as_ref()).await?;
 	Ok(HttpResponse::Ok().content_type(mime::APPLICATION_JSON).body(serde_json::to_string(&result)?))
 }
 
 // プロフィール表示
 async fn index() -> PageResult<impl Responder> {
-	Ok("")
+	Ok("") // TODO
 }

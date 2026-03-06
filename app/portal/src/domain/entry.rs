@@ -4,7 +4,10 @@ use serde::Deserialize;
 use sqlx::SqlitePool;
 use validation::Validation;
 
-use crate::types::{Id, MessageResult, PageResult, State, StateHandle};
+use crate::{
+	types::{MessageResult, Name, PageResult, State, StateHandle},
+	utils::path,
+};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(index).post(login).delete(logout));
@@ -22,15 +25,14 @@ struct Authorize {
 
 // エントランス画面
 async fn index() -> PageResult<impl Responder> {
-	Ok(HttpResponse::Ok()
-		.content_type(mime::TEXT_HTML)
-		.body(std::fs::read_to_string("app/portal/resource/html/register.html")?))
+	// TODO Liquid経由にする
+	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(std::fs::read_to_string(path::resource("html/register.html"))?))
 }
 
 async fn login(info: web::Form<Authorize>, session: Session, _: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", info.name).fetch_one(pool.as_ref()).await?;
 	if crate::utils::password::verify(&info.password, &hashed).map_err(|err| ErrorInternalServerError(err))? {
-		Id::save(&session, &info.name)?;
+		Name::save(&session, &info.name)?;
 		Ok(HttpResponse::NoContent().finish())
 	} else {
 		Err(ErrorUnauthorized("ユーザー名またはパスワードが異なります").into())
@@ -39,7 +41,7 @@ async fn login(info: web::Form<Authorize>, session: Session, _: StateHandle, poo
 
 // ログアウト
 async fn logout(session: Session) -> MessageResult<impl Responder> {
-	Id::delete(&session);
+	Name::delete(&session);
 	Ok(HttpResponse::NoContent().finish())
 }
 
@@ -51,7 +53,7 @@ async fn register(info: web::Form<Authorize>, session: Session, state: StateHand
 	let hashed = crate::utils::password::hash(&info.password).map_err(|err| ErrorInternalServerError(err))?;
 	match sqlx::query!("INSERT INTO user(name,password) VALUES(?,?)", info.name, hashed).execute(pool.as_ref()).await {
 		Ok(_) => {
-			Id::save(&session, &info.name)?;
+			Name::save(&session, &info.name)?;
 			Ok(HttpResponse::NoContent().finish())
 		}
 		Err(sqlx::Error::Database(err)) if err.is_unique_violation() => Err(ErrorConflict("ユーザー名が重複しています").into()),
