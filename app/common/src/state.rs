@@ -4,55 +4,47 @@ use std::{
 	sync::RwLock,
 };
 
-use actix_web::{FromRequest, web};
+use actix_web::{FromRequest, error::*, web};
 
-pub trait IsMaintenance: Clone + PartialEq {
+pub trait IsMaintenance {
 	fn is_maintenance(&self) -> bool;
 }
-#[derive(Debug)]
-pub struct State<T>(T);
-impl<T: IsMaintenance> State<T> {
-	pub fn eq_any<const N: usize>(&self, args: [T; N]) -> bool {
-		args.contains(&self.0)
-	}
-	pub fn is_none<const N: usize>(&self, args: [T; N]) -> bool {
-		!args.contains(&self.0)
-	}
-	pub fn change(&mut self, value: T) -> T {
-		let old = self.0.clone();
-		self.0 = value;
-		old
-	}
-}
 
-impl<T> From<T> for State<T> {
-	fn from(value: T) -> Self {
+/// # Example
+/// ```
+/// let app_data = web::Data::new(common::StateHandle::new(State::Active).pack());
+/// ```
+pub struct Handle<T: Clone + IsMaintenance>(T);
+
+impl<T: Clone + IsMaintenance> Handle<T> {
+	pub fn new(value: T) -> Self {
 		Self(value)
 	}
+	pub fn pack(self) -> RwLock<Self> {
+		RwLock::new(self)
+	}
 }
-impl<T> Deref for State<T> {
+impl<T: Clone + IsMaintenance> Deref for Handle<T> {
 	type Target = T;
 
 	fn deref(&self) -> &Self::Target {
 		&self.0
 	}
 }
-impl<T: IsMaintenance + 'static> FromRequest for State<T> {
+impl<T: Clone + IsMaintenance + 'static> FromRequest for Handle<T> {
 	type Error = actix_web::Error;
 	type Future = Ready<Result<Self, Self::Error>>;
 
 	fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
 		ready((|| {
-			let state = req
-				.app_data::<web::Data<RwLock<State<T>>>>()
-				.ok_or(actix_web::error::ErrorInternalServerError("アプリケーション状態が未定義"))?;
-			let guard = state.read().map_err(|_| actix_web::error::ErrorInternalServerError("アプリケーション状態読み込みに失敗"))?;
+			let state = req.app_data::<web::Data<RwLock<Handle<T>>>>().ok_or(ErrorInternalServerError("アプリケーション状態が未定義"))?;
+			let guard = state.read().map_err(|_| ErrorInternalServerError("アプリケーション状態読み込みに失敗"))?;
 			let state = guard.0.clone();
 			drop(guard);
-			if state.is_maintenance() {
-				Err(actix_web::error::ErrorForbidden("メンテナンス中"))
+			if !state.is_maintenance() {
+				Ok(Handle(state))
 			} else {
-				Ok(State(state))
+				Err(ErrorForbidden("メンテナンス中"))
 			}
 		})())
 	}

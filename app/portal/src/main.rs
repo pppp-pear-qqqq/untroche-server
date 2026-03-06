@@ -1,26 +1,39 @@
-use std::env;
+mod admin;
+mod domain;
+mod types;
+mod utils;
 
-use actix_web::{App, HttpServer, web};
-use sqlx::{Connection, SqliteConnection};
+use actix_session::{SessionMiddleware, config::PersistentSession, storage};
+use actix_web::{App, HttpResponse, HttpServer, cookie, middleware, web};
+use common::AdminGuardMiddleware;
 
 #[actix_web::main]
-async fn main() -> Result<(), std::io::Error> {
-	let load_env = |path: &str| env::var(path).expect(&format!("`{path}` is undefined"));
+async fn main() -> std::io::Result<()> {
 	// 環境変数読み込み
+	let load_env = |path: &str| std::env::var(path).expect(&format!("`{path}` is undefined"));
 	let host = load_env("SERVER_HOST");
 	let port = load_env("SERVER_PORT");
 	let db_url = load_env("DATABASE_URL");
-	let _ = db(&db_url);
+
+	// 設定初期化・必要な変数の読み込み
+	let app = crate::types::AppData::new(&db_url).await;
 
 	// サーバー構築
-	HttpServer::new(|| App::new().service(web::resource("/").to(async || "Hello World")))
-		.bind(format!("{host}:{port}"))?
-		.run()
-		.await
-}
-
-async fn db(url: &str) -> Result<(), sqlx::Error> {
-	let mut db = SqliteConnection::connect(&url).await?;
-	let a = sqlx::query!("SELECT * FROM user").fetch_all(&mut db).await?;
-	Ok(())
+	let server = HttpServer::new(move || {
+		let app = app.clone();
+		let session = SessionMiddleware::builder(storage::CookieSessionStore::default(), app.session_key)
+			.cookie_secure(false)
+			.session_lifecycle(PersistentSession::default().session_ttl(cookie::time::Duration::days(14)))
+			.build();
+		App::new()
+			.wrap(middleware::Logger::default())
+			.wrap(middleware::NormalizePath::trim())
+			.default_service(web::to(|| HttpResponse::NotFound()))
+			.app_data(app.pool)
+			.app_data(app.state)
+			.wrap(session)
+			.service(web::scope("admin").wrap(AdminGuardMiddleware(app.admin_key)).configure(admin::cfg))
+			.configure(domain::cfg)
+	});
+	server.bind(format!("{host}:{port}"))?.run().await
 }

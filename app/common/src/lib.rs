@@ -1,5 +1,4 @@
 pub mod admin_guard;
-pub mod cookie_session;
 pub mod device;
 pub mod error;
 pub mod html_codec;
@@ -10,10 +9,9 @@ pub mod webhook;
 
 pub use crate::{
 	admin_guard::AdminGuardMiddleware,
-	cookie_session::{get_cookie_key, get_cookie_session},
 	device::Device,
 	html_codec::{HTMLDecode, HTMLEncode},
-	identity::{Identity, OptionalIdentity},
-	state::{IsMaintenance, State},
+	identity::Identity,
+	state::{Handle as StateHandle, IsMaintenance},
 	webhook::Webhook,
 };

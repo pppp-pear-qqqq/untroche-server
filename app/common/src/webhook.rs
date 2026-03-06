@@ -8,11 +8,11 @@ pub struct Webhook {
 	avatar_url: Option<String>,
 }
 impl Webhook {
-	pub fn new<T0: AsRef<str>, T1: AsRef<str>, T2: AsRef<str>>(content: T0, username: T1, avatar_url: Option<T2>) -> Self {
+	pub fn new(content: &str, username: &str, avatar_url: Option<&str>) -> Self {
 		Self {
-			content: content.as_ref().to_string(),
-			username: username.as_ref().to_string(),
-			avatar_url: avatar_url.map(|x| x.as_ref().to_string()),
+			content: content.into(),
+			username: username.into(),
+			avatar_url: avatar_url.map(|x| x.into()),
 		}
 	}
 	pub async fn send<U: IntoUrl>(self, url: U) -> Result<Response, reqwest::Error> {

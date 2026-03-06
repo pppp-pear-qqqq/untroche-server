@@ -16,8 +16,8 @@
 /// ```
 #[macro_export]
 macro_rules! error {
-	($ty: ident) => {
-		pub struct $ty {
+	($vis:vis $ty: ident) => {
+		$vis struct $ty {
 			status_code: actix_web::http::StatusCode,
 			cause: Box<dyn std::error::Error>,
 		}
