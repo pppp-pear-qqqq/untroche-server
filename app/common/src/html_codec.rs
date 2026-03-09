@@ -155,7 +155,7 @@ impl HTMLDecode for str {
 	}
 }
 
-/// # 実装例
+/// # Example
 /// ```
 /// #[derive(Clone, Copy)]
 /// pub struct CommonTag;
