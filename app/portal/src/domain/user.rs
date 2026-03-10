@@ -2,7 +2,10 @@ use actix_web::{HttpResponse, Responder, mime, web};
 use serde::{Deserialize, Serialize};
 use sqlx::{SqlitePool, prelude::FromRow};
 
-use crate::types::{MessageResult, PageParams, PageResult};
+use crate::{
+	types::{MessageResult, PageParams, PageResult},
+	utils::Template,
+};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(list).post(search));
@@ -18,7 +21,8 @@ struct Search {
 
 // ユーザ一覧
 async fn list(_info: web::Query<Search>) -> PageResult<impl Responder> {
-	Ok("") // TODO
+	let html = Template::Base { summary: None }.render("html/user/list.html", liquid::object!({}))?;
+	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
 
 // 検索API
@@ -44,5 +48,6 @@ async fn search(info: web::Json<Search>, pool: web::Data<SqlitePool>) -> Message
 
 // プロフィール表示
 async fn index() -> PageResult<impl Responder> {
-	Ok("") // TODO
+	let html = Template::Base { summary: None }.render("html/user/index.html", liquid::object!({}))?;
+	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }

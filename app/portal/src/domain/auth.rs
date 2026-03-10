@@ -7,7 +7,7 @@ use sqlx::SqlitePool;
 
 use crate::{
 	types::{MessageResult, Name, State, StateHandle},
-	utils::path,
+	utils::Template,
 };
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
@@ -23,26 +23,24 @@ async fn issue(name: Option<Name>, state: StateHandle, pool: web::Data<SqlitePoo
 	}
 	let code = if let Some(name) = name {
 		// コード生成
-		let code = loop {
-			let mut dst = [0xffu8; 20];
-			OsRng.try_fill_bytes(&mut dst)?;
-			let code = BASE64_URL_SAFE_NO_PAD.encode(dst);
-			let timestamp = Local::now().timestamp() + EXPIRY;
-			match sqlx::query!("INSERT INTO auth(code,timestamp,user) VALUES(?,?,?)", code, timestamp, *name).execute(pool.as_ref()).await {
-				Ok(_) => break code,
-				// 万が一コードが重複したらもう一回やる
-				Err(sqlx::Error::Database(err)) if err.is_unique_violation() => continue,
-				Err(err) => return Err(err.into()),
-			}
-		};
+		let mut dst = [0xffu8; 20];
+		OsRng.try_fill_bytes(&mut dst)?;
+		let code = BASE64_URL_SAFE_NO_PAD.encode(dst);
+		let timestamp = Local::now().timestamp() + EXPIRY;
+		sqlx::query!("INSERT INTO auth(code,timestamp,user) VALUES(?,?,?)", code, timestamp, *name)
+			.execute(pool.as_ref())
+			.await?;
 		Some(code)
 	} else {
 		None
 	};
 	// コードを埋め込んだhtmlを返す
-	let html = liquid::ParserBuilder::with_stdlib().build()?.parse_file(path::resource("auth.html"))?.render(&liquid::object!({
-		"code": code.as_ref(),
-	}))?;
+	let html = Template::None.render(
+		"auth.html",
+		liquid::object!({
+			"code": code.as_ref(),
+		}),
+	)?;
 	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
 

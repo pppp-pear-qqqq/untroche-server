@@ -1,10 +1,13 @@
-use actix_web::{HttpResponse, Responder, error::*, web};
+use actix_web::{HttpResponse, Responder, error::*, mime, web};
 use common::Webhook;
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use validation::Validation;
 
-use crate::types::{MessageResult, Name, PageResult, State, StateHandle};
+use crate::{
+	types::{MessageResult, Name, PageResult, State, StateHandle},
+	utils::Template,
+};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(index).patch(patch).delete(delete));
@@ -12,7 +15,8 @@ pub fn cfg(cfg: &mut web::ServiceConfig) {
 
 // 編集・設定画面
 async fn index() -> PageResult<impl Responder> {
-	Ok("") // TODO
+	let html = Template::Base { summary: None }.render("html/profile.html", liquid::object!({}))?;
+	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
 
 // 更新処理

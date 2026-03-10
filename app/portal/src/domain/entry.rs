@@ -6,7 +6,7 @@ use validation::Validation;
 
 use crate::{
 	types::{MessageResult, Name, PageResult, State, StateHandle},
-	utils::path,
+	utils::{Template, deser_flag},
 };
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
@@ -24,9 +24,15 @@ struct Authorize {
 }
 
 // エントランス画面
-async fn index() -> PageResult<impl Responder> {
-	// TODO Liquid経由にする
-	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(std::fs::read_to_string(path::resource("html/register.html"))?))
+#[derive(Deserialize)]
+struct Index {
+	#[serde(deserialize_with = "deser_flag")]
+	popup: bool,
+}
+async fn index(info: web::Query<Index>) -> PageResult<impl Responder> {
+	let tpl = if info.popup { Template::Popup } else { Template::Base { summary: None } };
+	let html = tpl.render("html/register.html", liquid::object!({}))?;
+	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
 
 async fn login(info: web::Form<Authorize>, session: Session, _: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {

@@ -1,6 +1,9 @@
-use actix_web::{Responder, web};
+use actix_web::{HttpResponse, Responder, mime, web};
 
-use crate::types::{MessageResult, PageResult};
+use crate::{
+	types::{MessageResult, PageResult},
+	utils::Template,
+};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(index).post(post));
@@ -8,7 +11,8 @@ pub fn cfg(cfg: &mut web::ServiceConfig) {
 
 // 画面表示
 async fn index() -> PageResult<impl Responder> {
-	Ok("") // TODO
+	let html = Template::Base { summary: None }.render("html/report.html", liquid::object!({}))?;
+	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
 
 // 投稿
