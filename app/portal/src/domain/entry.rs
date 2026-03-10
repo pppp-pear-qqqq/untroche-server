@@ -29,13 +29,13 @@ struct Index {
 	#[serde(deserialize_with = "deser_flag")]
 	popup: bool,
 }
-async fn index(info: web::Query<Index>) -> PageResult<impl Responder> {
+async fn index(web::Query(info): web::Query<Index>) -> PageResult<impl Responder> {
 	let tpl = if info.popup { Template::Popup } else { Template::Base { summary: None } };
 	let html = tpl.render("html/register.html", liquid::object!({}))?;
 	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
 
-async fn login(info: web::Form<Authorize>, session: Session, _: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn login(web::Form(info): web::Form<Authorize>, session: Session, _: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", info.name).fetch_one(pool.as_ref()).await?;
 	if crate::utils::password::verify(&info.password, &hashed).map_err(|err| ErrorInternalServerError(err))? {
 		Name::save(&session, &info.name)?;
@@ -52,7 +52,7 @@ async fn logout(session: Session) -> MessageResult<impl Responder> {
 }
 
 // 新規登録
-async fn register(info: web::Form<Authorize>, session: Session, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn register(web::Form(info): web::Form<Authorize>, session: Session, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	if *state != State::Active {
 		return Err(ErrorForbidden("当サイトはクローズしています").into());
 	}

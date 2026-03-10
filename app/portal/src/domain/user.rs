@@ -20,20 +20,20 @@ struct Search {
 }
 
 // ユーザ一覧
-async fn list(_info: web::Query<Search>) -> PageResult<impl Responder> {
+async fn list(web::Query(_info): web::Query<Search>) -> PageResult<impl Responder> {
 	let html = Template::Base { summary: None }.render("html/user/list.html", liquid::object!({}))?;
 	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
 
 // 検索API
-async fn search(info: web::Json<Search>, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn search(web::Json(info): web::Json<Search>, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	#[derive(FromRow, Serialize)]
 	struct Record {
 		id: String,
 		profile: String,
 	}
 	let mut builder = sqlx::QueryBuilder::new("SELECT * FROM user");
-	if let Some(name) = &info.name {
+	if let Some(name) = info.name {
 		let search = format!("%{name}%");
 		builder.push(" WHERE name LIKE ?").push_bind(search);
 	}

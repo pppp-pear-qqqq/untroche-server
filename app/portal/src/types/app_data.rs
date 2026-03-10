@@ -9,7 +9,7 @@ use super::{State, StateHandle};
 #[derive(Clone)]
 pub struct AppData {
 	pub pool: web::Data<SqlitePool>,
-	pub state: web::Data<RwLock<StateHandle>>,
+	pub state: web::Data<RwLock<State>>,
 	pub session_key: cookie::Key,
 	pub admin_key: String,
 }
@@ -42,6 +42,7 @@ impl AppData {
 			}
 			Err(err) => panic!("{}", err),
 		};
+		println!("admin: {admin_key}");
 		// 作成
 		Self {
 			pool: web::Data::new(pool),

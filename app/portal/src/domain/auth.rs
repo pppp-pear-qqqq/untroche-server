@@ -48,14 +48,14 @@ async fn issue(name: Option<Name>, state: StateHandle, pool: web::Data<SqlitePoo
 struct Cert {
 	code: String,
 }
-async fn cert(info: web::Json<Cert>, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn cert(web::Json(info): web::Json<Cert>, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	if *state != State::Active {
 		return Err(ErrorForbidden("当サイトはクローズしています").into());
 	}
 	let pool = pool.as_ref();
 	let timestamp = Local::now().timestamp();
 	sqlx::query!("DELETE FROM auth WHERE timestamp<?", timestamp).execute(pool).await?;
-	match sqlx::query_scalar::<_, String>("SELECT user FROM auth WHERE code=?").bind(&info.code).fetch_one(pool).await {
+	match sqlx::query_scalar::<_, String>("SELECT user FROM auth WHERE code=?").bind(info.code).fetch_one(pool).await {
 		Ok(id) => Ok(HttpResponse::Ok().body(id)),
 		Err(sqlx::Error::RowNotFound) => Err(ErrorUnauthorized("認証コードが不正です").into()),
 		Err(err) => Err(err.into()),

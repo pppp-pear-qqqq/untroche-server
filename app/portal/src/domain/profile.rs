@@ -35,7 +35,7 @@ struct Password {
 	#[validation(name = "パスワード", min = 8)]
 	new: String,
 }
-async fn patch(info: web::Json<Patch>, name: Name, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn patch(web::Json(info): web::Json<Patch>, name: Name, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	if *state != State::Active {
 		return Err(ErrorForbidden("当サイトはクローズしています").into());
 	}
@@ -45,7 +45,7 @@ async fn patch(info: web::Json<Patch>, name: Name, state: StateHandle, pool: web
 	// 接続
 	let pool = pool.as_ref();
 	// パスワード
-	if let Some(password) = &info.password {
+	if let Some(password) = info.password {
 		let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", *name).fetch_one(pool).await?;
 		if !crate::utils::password::verify(&password.now, &hashed).map_err(|err| ErrorInternalServerError(err))? {
 			return Err(ErrorForbidden("パスワードが異なります").into());
@@ -54,17 +54,17 @@ async fn patch(info: web::Json<Patch>, name: Name, state: StateHandle, pool: web
 		sep.push("password=").push_bind_unseparated(hashed);
 	}
 	// プロフィール
-	if let Some(v) = &info.profile {
+	if let Some(v) = info.profile {
 		// DBに保持するのは生データ、表示時にエスケープ
 		sep.push("profile=").push_bind_unseparated(v);
 	}
 	// ウェブフック
-	if let Some(v) = &info.webhook {
+	if let Some(v) = info.webhook {
 		// 値がある場合のみテスト後に確定、無ければNULLをセット
 		if !v.is_empty() {
 			// 値がある
 			match Webhook::new("ウェブフックURLが登録されました。\nこのメッセージを受け取れていれば正しく設定できています。", "untroche", None)
-				.send(v)
+				.send(&v)
 				.await
 			{
 				Ok(_) => (),
@@ -85,7 +85,7 @@ async fn patch(info: web::Json<Patch>, name: Name, state: StateHandle, pool: web
 struct Delete {
 	password: String,
 }
-async fn delete(info: web::Form<Delete>, name: Name, _: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn delete(web::Form(info): web::Form<Delete>, name: Name, _: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	let pool = pool.as_ref();
 	let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", *name).fetch_one(pool).await?;
 	if !crate::utils::password::verify(&info.password, &hashed).map_err(|err| ErrorInternalServerError(err))? {
