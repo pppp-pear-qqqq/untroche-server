@@ -26,7 +26,7 @@ impl AppData {
 			Err(sqlx::Error::RowNotFound) => {
 				let state = State::Maintenance;
 				let str = state.to_string();
-				sqlx::query!("INSERT INTO setting VALUES(?,?)", STATE, str).fetch_one(&pool).await.unwrap();
+				sqlx::query!("INSERT INTO setting VALUES(?,?)", STATE, str).execute(&pool).await.unwrap();
 				state
 			}
 			Err(err) => panic!("{}", err),
@@ -37,7 +37,7 @@ impl AppData {
 			Err(sqlx::Error::RowNotFound) => {
 				let session_key = cookie::Key::generate();
 				let admin_key = BASE64_STANDARD.encode(&session_key.master());
-				sqlx::query_scalar!("INSERT INTO setting VALUES(?,?)", KEY, admin_key).fetch_one(&pool).await.unwrap();
+				sqlx::query_scalar!("INSERT INTO setting VALUES(?,?)", KEY, admin_key).execute(&pool).await.unwrap();
 				(session_key, admin_key)
 			}
 			Err(err) => panic!("{}", err),

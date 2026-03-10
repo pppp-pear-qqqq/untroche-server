@@ -42,9 +42,8 @@ services:
   <<: *rust-base
   environment:
    - APP_NAME=portal
-   - SERVER_HOST=0.0.0.0
    - SERVER_PORT=8000
-   - DATABASE_URL=sqlite:./app/portal/portal.db
+   - DATABASE_URL=sqlite:app/portal/database.db
   networks:
    - untroche
 
@@ -52,9 +51,8 @@ services:
 #   <<: *rust-base
 #   environment:
 #    - APP_NAME=colllus
-#    - SERVER_HOST=0.0.0.0
 #    - SERVER_PORT=8001
-#    - DATABASE_URL=sqlite:./app/colllus/colllus.db
+#    - DATABASE_URL=sqlite:app/colllus/database.db
 #   networks:
 #    - untroche
 
