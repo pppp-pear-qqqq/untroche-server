@@ -1,5 +1,5 @@
 user
-	id text pk
+	name text pk
 	password text
 	profile text default('')		# プロフィール、プレイヤーのSNSアカウントやキャラクターなど　全部ひとまとめにする　未エスケープ
 	webhook text?		# 共通のウェブフックURL
