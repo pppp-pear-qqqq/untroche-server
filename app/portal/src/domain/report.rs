@@ -1,9 +1,9 @@
 use actix_web::{HttpResponse, Responder, mime, web};
+use chrono::Local;
+use serde::Deserialize;
+use sqlx::SqlitePool;
 
-use crate::{
-	types::{MessageResult, PageResult},
-	utils::Template,
-};
+use crate::utils::{MessageResult, Name, PageResult, Template};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(index).post(post));
@@ -16,6 +16,15 @@ async fn index() -> PageResult<impl Responder> {
 }
 
 // 投稿
-async fn post() -> MessageResult<impl Responder> {
-	Ok("") // TODO
+#[derive(Deserialize)]
+struct Post {
+	body: String,
+}
+async fn post(web::Form(info): web::Form<Post>, user: Option<Name>, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+	let timestamp = Local::now().timestamp();
+	let user = user.as_deref();
+	sqlx::query!("INSERT INTO report(timestamp,user,body) VALUES(?,?,?)", timestamp, user, info.body)
+		.execute(pool.as_ref())
+		.await?;
+	Ok(HttpResponse::NoContent().finish())
 }

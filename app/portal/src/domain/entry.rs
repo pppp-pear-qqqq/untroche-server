@@ -4,10 +4,7 @@ use serde::Deserialize;
 use sqlx::SqlitePool;
 use validation::Validation;
 
-use crate::{
-	types::{MessageResult, Name, PageResult, State, StateHandle},
-	utils::{Template, deser_flag},
-};
+use crate::utils::{MessageResult, Name, PageResult, State, StateHandle, Template, deser_flag};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(index).post(login).delete(logout));
@@ -26,7 +23,7 @@ struct Authorize {
 // エントランス画面
 #[derive(Deserialize)]
 struct Index {
-	#[serde(deserialize_with = "deser_flag")]
+	#[serde(deserialize_with = "deser_flag", default)]
 	popup: bool,
 }
 async fn index(web::Query(info): web::Query<Index>) -> PageResult<impl Responder> {

@@ -9,7 +9,7 @@ use serde::{Serialize, de::DeserializeOwned};
 
 pub const KEY: &str = "login-session";
 
-pub struct Identity<T: DeserializeOwned>(pub T);
+pub struct Identity<T: DeserializeOwned>(T);
 
 impl<T: DeserializeOwned + Serialize> Identity<T> {
 	pub fn save(session: &Session, value: &T) -> Result<(), actix_session::SessionInsertError> {

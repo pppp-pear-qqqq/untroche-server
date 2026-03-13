@@ -7,7 +7,7 @@ mod user;
 use actix_cors::Cors;
 use actix_web::{HttpResponse, Responder, mime, web};
 
-use crate::{types::PageResult, utils::Template};
+use crate::utils::{PageResult, Template};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.route("", web::get().to(index));

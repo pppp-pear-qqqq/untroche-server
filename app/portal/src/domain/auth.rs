@@ -5,29 +5,26 @@ use rand::{TryRngCore as _, rngs::OsRng};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::{
-	types::{MessageResult, Name, State, StateHandle},
-	utils::Template,
-};
+use crate::utils::{MessageResult, Name, State, StateHandle, Template};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(issue).post(cert));
 }
 
-async fn issue(name: Option<Name>, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
+async fn issue(user: Option<Name>, state: StateHandle, pool: web::Data<SqlitePool>) -> MessageResult<impl Responder> {
 	// 認証コード有効期限(秒)
 	const EXPIRY: i64 = 120;
 
 	if *state != State::Active {
 		return Err(ErrorForbidden("当サイトはクローズしています").into());
 	}
-	let code = if let Some(name) = name {
+	let code = if let Some(user) = user {
 		// コード生成
 		let mut dst = [0xffu8; 20];
 		OsRng.try_fill_bytes(&mut dst)?;
 		let code = BASE64_URL_SAFE_NO_PAD.encode(dst);
 		let timestamp = Local::now().timestamp() + EXPIRY;
-		sqlx::query!("INSERT INTO auth(code,timestamp,user) VALUES(?,?,?)", code, timestamp, *name)
+		sqlx::query!("INSERT INTO auth(code,timestamp,user) VALUES(?,?,?)", code, timestamp, *user)
 			.execute(pool.as_ref())
 			.await?;
 		Some(code)

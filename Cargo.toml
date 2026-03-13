@@ -12,6 +12,7 @@ argon2 = "0.5.3"
 base64 = "0.22.1"
 chrono = { version = "0.4.44", features = ["serde"] }
 common.path = "app/common"
+env_logger = "0.11.9"
 liquid = "0.26.11"
 rand = "0.9.2"
 regex = "1.12.3"

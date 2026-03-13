@@ -13,3 +13,10 @@ auth
 		code text pri
 		timestamp timestamp
 		user text ref(user.name) update(cascade) delete(cascade)
+
+report
+	columns
+		id int pri
+		timestamp timestamp
+		user text null ref(user.name) update(cascade) delete(setnull)
+		body text

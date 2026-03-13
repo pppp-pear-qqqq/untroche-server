@@ -20,9 +20,6 @@ impl<T: Clone + IsMaintenance> Handle<T> {
 	pub fn new(value: T) -> Self {
 		Self(value)
 	}
-	pub fn pack(self) -> RwLock<T> {
-		RwLock::new(self.0)
-	}
 }
 impl<T: Clone + IsMaintenance> Deref for Handle<T> {
 	type Target = T;

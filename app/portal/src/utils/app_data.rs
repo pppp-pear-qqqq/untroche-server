@@ -4,7 +4,7 @@ use actix_web::{cookie, web};
 use base64::{Engine, prelude::BASE64_STANDARD};
 use sqlx::SqlitePool;
 
-use super::{State, StateHandle};
+use super::{KEY, STATE, State};
 
 #[derive(Clone)]
 pub struct AppData {
@@ -15,9 +15,6 @@ pub struct AppData {
 }
 impl AppData {
 	pub async fn new(url: &str) -> Self {
-		// キー定義
-		const STATE: &str = "STATE";
-		const KEY: &str = "KEY";
 		// DB接続
 		let pool = SqlitePool::connect(url).await.unwrap();
 		// State読み込み
@@ -46,7 +43,7 @@ impl AppData {
 		// 作成
 		Self {
 			pool: web::Data::new(pool),
-			state: web::Data::new(StateHandle::new(state).pack()),
+			state: web::Data::new(RwLock::new(state)),
 			session_key,
 			admin_key,
 		}

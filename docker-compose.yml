@@ -44,6 +44,7 @@ services:
    - APP_NAME=portal
    - SERVER_PORT=8000
    - DATABASE_URL=sqlite:app/portal/database.db
+   - RUST_LOG=debug
   networks:
    - untroche
 

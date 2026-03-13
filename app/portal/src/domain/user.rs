@@ -2,10 +2,7 @@ use actix_web::{HttpResponse, Responder, mime, web};
 use serde::{Deserialize, Serialize};
 use sqlx::{SqlitePool, prelude::FromRow};
 
-use crate::{
-	types::{MessageResult, PageParams, PageResult},
-	utils::Template,
-};
+use crate::utils::{MessageResult, PageParams, PageResult, Template};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(list).post(search));

@@ -1,6 +1,6 @@
 use actix_web::{HttpResponse, mime};
 
-use crate::utils::Template;
+use super::Template;
 
 common::error!(pub MessageError);
 impl actix_web::ResponseError for MessageError {

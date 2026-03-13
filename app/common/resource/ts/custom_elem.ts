@@ -105,7 +105,7 @@ customElements.define('hamburger-menu', class extends HTMLElement {
 
 		const style = document.createElement('link');
 		style.rel = 'stylesheet';
-		style.href = '/style/hamburger.css';
+		style.href = 'common/style/hamburger.css';
 		// const style = document.createElement('style');
 		// style.textContent = ':host{--siz: 36px;--wht: calc(var(--siz) / 9);--pad: calc(var(--siz) / 25);width:var(--siz);height:var(--siz);padding:var(--pad) 0!important;color:var(--border-color);display:flex;box-sizing:border-box;flex-direction:column;justify-content:space-between;@supports (x:attr(size px,36px)){--siz: attr(size px, 36px)}}div{height:var(--wht);border-radius:var(--wht);background-color:currentColor;transition:transform .3s}:host([open]) div{&:nth-of-type(1){transform:translateY(calc((var(--siz) - var(--wht)) / 2 - var(--pad))) rotate(45deg)}&:nth-of-type(2){transform:translate(75%) scaleX(0)}&:nth-of-type(3){transform:translateY(calc((var(--siz) - var(--wht)) / -2 + var(--pad))) rotate(-45deg)}}';
 		shadow.appendChild(style);

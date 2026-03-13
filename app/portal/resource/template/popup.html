@@ -7,7 +7,7 @@
 		<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 		<meta name="robots" content="none">
 		<meta name="viewport" content="width=device-width,viewport-fit=cover">
-		<title>{{title|default:""}}</title>
+		<title>{% if title %}{{title}}{% endif %}</title>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic&display=swap">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.min.css">
 		<base href="/">
