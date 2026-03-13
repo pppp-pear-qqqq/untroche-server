@@ -12,7 +12,12 @@ pub fn cfg(cfg: &mut web::ServiceConfig) {
 
 // 編集・設定画面
 async fn index() -> PageResult<impl Responder> {
-	let html = Template::Base { summary: None }.render("html/profile.html", liquid::object!({}))?;
+	let html = Template::Base {
+		nobots: true,
+		summary: None,
+		user: None,
+	}
+	.render("html/profile.html", liquid::object!({}))?;
 	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
 

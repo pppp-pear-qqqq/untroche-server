@@ -21,7 +21,11 @@ impl actix_web::ResponseError for PageError {
 
 	fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
 		let mut builder = HttpResponse::build(self.status_code());
-		let tpl = Template::Base { summary: None };
+		let tpl = Template::Base {
+			nobots: true,
+			summary: None,
+			user: None,
+		};
 		let main = format!("{self}");
 		match tpl.render_raw(&main) {
 			Ok(html) => builder.content_type(mime::TEXT_HTML).body(html),

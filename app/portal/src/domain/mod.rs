@@ -19,6 +19,11 @@ pub fn cfg(cfg: &mut web::ServiceConfig) {
 }
 
 async fn index() -> PageResult<impl Responder> {
-	let html = Template::Base { summary: None }.render("html/index.html", liquid::object!({}))?;
+	let html = Template::Base {
+		nobots: false,
+		summary: None,
+		user: None,
+	}
+	.render("html/index.html", liquid::object!({}))?;
 	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }

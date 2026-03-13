@@ -27,7 +27,15 @@ struct Index {
 	popup: bool,
 }
 async fn index(web::Query(info): web::Query<Index>) -> PageResult<impl Responder> {
-	let tpl = if info.popup { Template::Popup } else { Template::Base { summary: None } };
+	let tpl = if info.popup {
+		Template::Popup
+	} else {
+		Template::Base {
+			nobots: false,
+			summary: None,
+			user: None,
+		}
+	};
 	let html = tpl.render("html/register.html", liquid::object!({}))?;
 	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
