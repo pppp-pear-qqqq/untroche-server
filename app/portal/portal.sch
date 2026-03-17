@@ -13,7 +13,7 @@ table user
 	password text
 	profile text default('')		# プロフィール、プレイヤーのSNSアカウントやキャラクターなど　全部ひとまとめにする　未エスケープ
 	webhook text?		# 共通のウェブフックURL
-	mutes blob			# ユーザーミュートのリスト(Vec<id>)
+	mutes blob?			# ユーザーミュートのリスト(Vec<id>)
 
 table auth
 	code text pk

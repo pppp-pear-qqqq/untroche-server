@@ -29,8 +29,7 @@ body>header {
 	}
 
 	>hamburger-menu,
-	>.hamburger,
-	>menu {
+	>.hamburger {
 		z-index: 1;
 		view-transition-name: menu-button;
 	}
