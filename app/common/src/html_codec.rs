@@ -3,31 +3,48 @@ use std::{borrow::Cow, sync::OnceLock};
 use regex::Regex;
 
 pub trait HTMLEncode {
-	fn br(&self) -> String;
+	fn br(&self) -> Cow<'_, str>;
 	fn escape(&self, quot: bool) -> Cow<'_, str>;
 	fn escape_and_link(&self) -> Cow<'_, str>;
 	fn tag<T: TagFormat>(&self, format: T) -> Cow<'_, str>;
 }
 impl HTMLEncode for str {
-	fn br(&self) -> String {
+	fn br(&self) -> Cow<'_, str> {
 		const BR: &str = "<br>";
-		let mut result = String::with_capacity(self.len() + 32);
-		let mut chars = self.chars().peekable();
-		while let Some(c) = chars.next() {
-			match c {
-				'\r' => {
-					if chars.peek() == Some(&'\n') {
-						chars.next();
+
+		let bytes = self.as_bytes();
+		for i in 0..bytes.len() {
+			if bytes[i] == b'\n' || bytes[i] == b'\r' {
+				let mut owned = String::with_capacity(self.len() + 32);
+				owned.push_str(&self[..i]);
+				let mut p = i;
+				while p < bytes.len() {
+					match bytes[p] {
+						b'\n' => {
+							owned.push_str(BR);
+							p += 1;
+						}
+						b'\r' => {
+							owned.push_str(BR);
+							p += 1;
+							if p < bytes.len() && bytes[p] == b'\n' {
+								p += 1;
+							}
+						}
+						_ => {
+							let start = p;
+							while p < bytes.len() && bytes[p] != b'\r' && bytes[p] != b'\n' {
+								p += 1;
+							}
+							owned.push_str(&self[start..p]);
+						}
 					}
-					result.push_str(BR);
 				}
-				'\n' => {
-					result.push_str(BR);
-				}
-				_ => result.push(c),
+				owned.push_str(&self[p..]);
+				return Cow::Owned(owned);
 			}
 		}
-		result
+		Cow::Borrowed(self)
 	}
 	fn escape(&self, quot: bool) -> Cow<'_, str> {
 		let repl = |b: u8| match b {
@@ -38,15 +55,16 @@ impl HTMLEncode for str {
 			b'\'' if quot => Some("&apos;"),
 			_ => None,
 		};
+
 		let bytes = self.as_bytes();
-		for (i, &b) in bytes.iter().enumerate() {
-			if let Some(r) = repl(b) {
+		for i in 0..bytes.len() {
+			if let Some(r) = repl(bytes[i]) {
 				let mut owned = String::with_capacity(self.len() + 32);
 				owned.push_str(&self[..i]);
 				owned.push_str(r);
 				let mut p = i + 1;
-				for (i, &b) in bytes.iter().enumerate().skip(p) {
-					if let Some(r) = repl(b) {
+				for i in p..bytes.len() {
+					if let Some(r) = repl(bytes[i]) {
 						owned.push_str(&self[p..i]);
 						owned.push_str(r);
 						p = i + 1;
