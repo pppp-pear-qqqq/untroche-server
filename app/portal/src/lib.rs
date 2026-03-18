@@ -1,7 +1,7 @@
 #[path = "utils/tag_format.rs"]
 mod tag_format;
 
-use common::html_codec::HTMLEncode as _;
+use html_codec::HTMLEncode as _;
 use wasm_bindgen::prelude::*;
 
 use self::tag_format::CommonTag;

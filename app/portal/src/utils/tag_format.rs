@@ -1,11 +1,12 @@
 use std::borrow::Cow;
 
+use html_codec::TagFormat;
 use rand::seq::IndexedRandom as _;
 
 #[derive(Clone, Copy)]
 pub struct CommonTag;
 
-impl common::html_codec::TagFormat for CommonTag {
+impl TagFormat for CommonTag {
 	fn parse(self, raw: &str) -> Cow<'_, str> {
 		fn part(value: &str, limit: usize) -> Vec<&str> {
 			let mut parts = Vec::new();
