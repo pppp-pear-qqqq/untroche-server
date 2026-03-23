@@ -48,14 +48,14 @@ services:
   networks:
    - untroche
 
-#  colllus:
-#   <<: *rust-base
-#   environment:
-#    - APP_NAME=colllus
-#    - SERVER_PORT=8001
-#    - DATABASE_URL=sqlite:app/colllus/database.db
-#   networks:
-#    - untroche
+ erltod:
+  <<: *rust-base
+  environment:
+   - APP_NAME=erltod
+   - SERVER_PORT=8001
+   - DATABASE_URL=sqlite:app/erltod/database.db
+  networks:
+   - untroche
 
 networks:
  untroche:
