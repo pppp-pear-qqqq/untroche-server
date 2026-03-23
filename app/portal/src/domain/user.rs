@@ -2,11 +2,11 @@ use actix_web::{HttpResponse, Responder, mime, web};
 use serde::{Deserialize, Serialize};
 use sqlx::{SqlitePool, prelude::FromRow};
 
-use crate::utils::{MessageResult, PageParams, PageResult, Template};
+use crate::utils::{MessageResult, PageParams, PageResult, Template, template::Summary};
 
 pub fn cfg(cfg: &mut web::ServiceConfig) {
 	cfg.service(web::resource("").get(list).post(search));
-	cfg.service(web::resource("{id}").get(index));
+	cfg.service(web::resource("{name}").get(index));
 }
 
 #[derive(Deserialize)]
@@ -49,12 +49,25 @@ async fn search(web::Json(info): web::Json<Search>, pool: web::Data<SqlitePool>)
 }
 
 // プロフィール表示
-async fn index() -> PageResult<impl Responder> {
+#[derive(Deserialize)]
+struct Index {
+	name: String,
+}
+async fn index(path: web::Path<Index>, pool: web::Data<SqlitePool>) -> PageResult<impl Responder> {
+	let name = path.into_inner().name;
+	let profile = sqlx::query_scalar!("SELECT profile FROM user WHERE name=?", name).fetch_one(pool.as_ref()).await?;
 	let html = Template::Base {
 		nobots: false,
-		summary: None,
+		summary: Some(Summary {
+			title: name.clone(),
+			desc: profile.chars().take(20).collect(),
+			url: format!("user/{name}"),
+			ogtype: "profile".into(),
+			image: "http://untroche.com/image/ogp.png".into(),
+			card: "summary".into(),
+		}),
 		user: None,
 	}
-	.render("html/user/index.html", liquid::object!({}))?;
+	.render("html/user/index.html", liquid::object!({"name":&name,"profile":&profile}))?;
 	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }

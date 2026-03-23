@@ -36,7 +36,7 @@ async fn index(web::Query(info): web::Query<Index>) -> PageResult<impl Responder
 			user: None,
 		}
 	};
-	let html = tpl.render("html/register.html", liquid::object!({}))?;
+	let html = tpl.render("html/entry.html", liquid::object!({}))?;
 	Ok(HttpResponse::Ok().content_type(mime::TEXT_HTML).body(html))
 }
 

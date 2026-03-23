@@ -10,7 +10,7 @@ table actor
 	profile text default('')	# タグ未処理
 	portraits text
 	icons text
-	icon text expr(icons.lines[0])	# これ成立しないのでちゃんと定義する
+	icon text expr(substr(icons,1,instr(icons||char(10),char(10))-1))
 
 table timeline
 	id int pk
@@ -32,10 +32,16 @@ table actor_style
 	eno ref(actor.eno).update(cascade).delete(cascade)
 	name text
 	type text	# カンマ区切りかなにかでキーワードを列挙する　検索時はLIKE句を使う
-	# TODO 戦闘設定で具体的に何するかを思い出す
+	value blob	# Vec<(id,name,word)> または HashMap<timing,word>
 
-table navigator	# 場合によってはactor_styleと統合する？　明確に中身が違いそうだから分けるべきではあるが、世界観的には同じもの
-	@pk(eno,name)
-	eno ref(actor.eno).update(cascade).delete(cascade)
+view navigator
+	s.eno
+	s.name
+	words s.value
+	@from(actor_style s WHERE type='navigator')
+
+table skill
+	id int pk
 	name text
-	words blob	# タイミング・発言のHashMap
+	cost int
+	effect text

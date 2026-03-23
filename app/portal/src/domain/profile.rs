@@ -50,7 +50,7 @@ async fn patch(web::Json(info): web::Json<Patch>, user: Name, state: StateHandle
 	if let Some(password) = info.password {
 		let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", *user).fetch_one(pool).await?;
 		if !crate::utils::password::verify(&password.now, &hashed).map_err(|err| ErrorInternalServerError(err))? {
-			return Err(ErrorForbidden("パスワードが異なります").into());
+			return Err(ErrorForbidden("パスワードが正しくありません").into());
 		}
 		let hashed = crate::utils::password::hash(&password.new).map_err(|err| ErrorInternalServerError(err))?;
 		sep.push("password=").push_bind_unseparated(hashed);
@@ -91,7 +91,7 @@ async fn delete(web::Form(info): web::Form<Delete>, user: Name, _: StateHandle, 
 	let pool = pool.as_ref();
 	let hashed = sqlx::query_scalar!("SELECT password FROM user WHERE name=?", *user).fetch_one(pool).await?;
 	if !crate::utils::password::verify(&info.password, &hashed).map_err(|err| ErrorInternalServerError(err))? {
-		return Err(ErrorForbidden("パスワードが異なります").into());
+		return Err(ErrorForbidden("パスワードが正しくありません").into());
 	}
 	sqlx::query!("DELETE FROM user WHERE name=?", *user).execute(pool).await?;
 	Ok(HttpResponse::NoContent().finish())
