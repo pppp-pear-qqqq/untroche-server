@@ -6,6 +6,7 @@ pub mod state;
 pub mod tag_format;
 pub mod template;
 
+use html_codec::HTMLEncode;
 use serde::{Deserialize as _, Deserializer};
 
 pub use self::{app_data::AppData, error::*, page_params::PageParams, state::State, tag_format::CommonTag, template::Template};
@@ -37,4 +38,9 @@ where
 		"false" | "0" => Ok(false),
 		_ => Err(serde::de::Error::custom("boolean flag expected")),
 	}
+}
+
+#[allow(unused)]
+fn code() {
+	"aaa".br().tag(CommonTag);
 }
